@@ -67,7 +67,7 @@ VALUES
 GO
 	
 
-
+-- search only for name 
 create procedure getEmployees
  @SearchQuery NVARCHAR(50),
     @PageNumber INT,
@@ -90,3 +90,43 @@ BEGIN
     ORDER BY id
     OFFSET @StartRow ROWS FETCH NEXT @PageSize ROWS ONLY;
 END
+
+
+
+-- search on all colums for search operation
+alter PROCEDURE getEmployees
+    @SearchQuery NVARCHAR(50),
+    @PageNumber INT,
+    @PageSize INT,
+    @TotalRecords INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @StartRow INT;
+    SET @StartRow = (@PageNumber - 1) * @PageSize;
+
+    -- Calculate total records matching the search criteria
+    SELECT @TotalRecords = COUNT(*)
+    FROM Employees
+    WHERE (@SearchQuery IS NULL 
+           OR Name LIKE '%' + @SearchQuery + '%'
+           OR Details LIKE '%' + @SearchQuery + '%'
+           OR CAST(Salary AS NVARCHAR) LIKE '%' + @SearchQuery + '%'
+           OR CAST(Age AS NVARCHAR) LIKE '%' + @SearchQuery + '%');
+
+    -- Retrieve paginated records
+    SELECT id, Name, Details, COALESCE(Salary, 0) AS Salary, COALESCE(Age, 0) AS Age
+    FROM Employees
+    WHERE (@SearchQuery IS NULL 
+           OR Name LIKE '%' + @SearchQuery + '%'
+           OR Details LIKE '%' + @SearchQuery + '%'
+           OR CAST(Salary AS NVARCHAR) LIKE '%' + @SearchQuery + '%'
+           OR CAST(Age AS NVARCHAR) LIKE '%' + @SearchQuery + '%')
+    ORDER BY id
+    OFFSET @StartRow ROWS FETCH NEXT @PageSize ROWS ONLY;
+END
+GO
+
+
+
