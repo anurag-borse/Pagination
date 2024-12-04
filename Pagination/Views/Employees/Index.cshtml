@@ -1,0 +1,85 @@
+﻿@model List<Pagination.Models.Employees>
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+<h3>Employee List</h3>
+
+<div>
+    <form id="searchForm">
+        <div class="form-group">
+            <label for="searchQuery">Search</label>
+            <input type="text" id="searchQuery" class="form-control" placeholder="search">
+        </div>
+        <button type="button" class="btn btn-primary" onclick="loadData(1)">Submit</button>
+    </form>
+</div>
+<br />
+
+<div id="employeeTable">
+    <!-- Table will be dynamically populated -->
+</div>
+<div id="pagination">
+    <!-- Pagination buttons will be dynamically populated -->
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    function loadData(pageNumber) {
+        const searchQuery = $('#searchQuery').val();
+        $.ajax({
+            url: '@Url.Action("GetEmployees", "Employees")',
+            data: { searchQuery: searchQuery, page: pageNumber },
+            method: 'GET',
+            success: function (response) {
+                renderTable(response.data);
+                renderPagination(response.totalPages, response.currentPage);
+            },
+            error: function () {
+                alert("An error occurred while fetching data.");
+            }
+        });
+    }
+
+    function renderTable(employees) {
+        let table = `
+            <table class="table">
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Salary</th>
+                    <th>Details</th>
+                    <th>Age</th>
+                </tr>`;
+
+        employees.forEach(emp => {
+            table += `
+                <tr>
+                    <td>${emp.id}</td>
+                    <td>${emp.Name}</td>
+                    <td>${emp.Salary}</td>
+                    <td>${emp.Details}</td>
+                    <td>${emp.Age}</td>
+                </tr>`;
+        });
+
+        table += `</table>`;
+        $('#employeeTable').html(table);
+    }
+
+    function renderPagination(totalPages, currentPage) {
+        let pagination = '';
+        for (let i = 1; i <= totalPages; i++) {
+            pagination += `
+                <button class="btn ${i === currentPage ? 'btn-primary' : 'btn-default'}"
+                        onclick="loadData(${i})">${i}</button>`;
+        }
+        $('#pagination').html(pagination);
+    }
+
+    // Load initial data
+    $(document).ready(function () {
+        loadData(1);
+    });
+</script>
